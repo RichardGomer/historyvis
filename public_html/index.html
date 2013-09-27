@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>History Visualiser</title>
+        <meta name="description" content="">
+        
+        <meta name="author" content="Richard Gomer - www.xebre.net">
+        
+        <script src="js/jquery.min.js"></script>
+        <script src="js/jquery.dataTables.min.js"></script>
+        
+        <script src="js/raphael-min.js"></script>
+        <script src="js/g.raphael-min.js"></script>
+        <script src="js/g.bar-min.js"></script>
+        <script src="js/g.pie-min.js"></script>
+        
+        <script src="js/parser.js"></script>
+        <script src="js/tld.js"></script>
+        
+        <link rel="stylesheet" type="text/css" href="jquery.dataTables.css" />
+        
+        <style>
+            html, body
+            {
+                font-family: helvetica, sans-serif;
+                color: #000;
+                background: #fff;
+                font-size: 12px;
+            }
+            
+            div
+            {
+                position: relative;
+            }
+            
+            h2
+            {
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+            
+        </style>
+        
+    </head>
+    <body>
+
+        <div id="page" style="width: 950px; margin: 30px auto 30px auto;">
+            <div id="input">
+                <p>Paste your history into the box below and hit visualise</p>
+                <textarea id="history" style="width: 100%; height: 300px;"></textarea>
+                <button id="doparse">Visualise</button>
+            </div>
+            <div id="output" style="display: none;">
+                <div id="graph_domains" style="width: 600px; height: 400px; float: left;"><h2>Domain</h2></div>
+                <div id="graph_proto" style="width: 300px; height: 200px; float: right;"><h2>Protocol</h2></div>
+                <div id="graph_tld" style="width: 300px; height: 200px; float: right;"><h2><acronym title="Top Level Domain">TLD</acronym></h2></div>
+                <div id="data" style="margin-top: 30px; width: 900px; height: 450px; float: right;"><h2>Data</h2></div>
+            </div>
+        </div>
+        
+        <script type="text/javascript">
+
+            
+            
+        $('#doparse').click(function(){
+            
+            console.log("Visualise!");
+            
+            var history = $('#history').val();
+            
+            var parser = new HistoryParser();
+            
+            var dcounter = new DomainVisitCounter();
+            parser.addHandler(dcounter);
+            
+            var pcounter = new ProtocolCounter();
+            parser.addHandler(pcounter);
+            
+            var tcounter = new TLDCounter();
+            parser.addHandler(tcounter);
+            
+            var indexer = new URLIndex();
+            parser.addHandler(indexer);
+            
+            parser.parse(history);
+            
+            if(parser.count < 1)
+            {
+                alert("You should enter at least one valid URL!");
+                return;
+            }
+                
+            $('#input').hide();
+            $('#output').show();
+            
+            
+            var makePie = function(el, data, filterIndex, filterType)
+            {
+                var legend = [];
+                var values = [];
+                for(var name in data)
+                {
+                    legend.push(name);
+                    values.push(data[name]);
+                }
+                
+                var r = Raphael(el.get(0), el.width(), el.height());
+                var radius = Math.min(el.width(), el.height()) / 2;
+                var pie = r.piechart(radius, radius, 0.8 * radius, values, {legend: legend, maxSlices: 50, minPercent: 1});
+
+                pie.hover(function ()
+                        {
+                            this.sector.stop();
+                            this.sector.scale(1.1, 1.1, this.cx, this.cy);
+
+                            if (this.label)
+                            {
+                                this.label[0].stop();
+                                this.label[0].attr({ r: 7.5 });
+                                this.label[1].attr({ "font-weight": 800 });
+                            }
+                        }, 
+                        function ()
+                        {
+                            this.sector.animate({ transform: 's1 1 ' + this.cx + ' ' + this.cy }, 500, "bounce");
+
+                            if(this.label)
+                            {
+                                this.label[0].animate({ r: 5 }, 500, "bounce");
+                                this.label[1].attr({ "font-weight": 400 });
+                            }
+                        });
+                        
+                // Filter the data table when segments are clicked
+                pie.click(function()
+                    {
+                        if(this.label)
+                        {
+                            var lbl = this.label[1].attrs.text;
+                            
+                            console.log(lbl);
+                            
+                            if(lbl === 'Others')
+                                return;
+                            
+                            if(filterType === 'end')
+                                dataTable.fnFilter(lbl + "$", filterIndex, true);
+                            else if(filterType === 'start')
+                                dataTable.fnFilter("^" + lbl, filterIndex, true);
+                            else
+                                dataTable.fnFilter(lbl, filterIndex);
+                        }
+                    }
+                );
+            }
+            
+
+            // Draw pie charts
+            makePie($('#graph_domains'), dcounter.getData(), 2, 'end');
+            makePie($('#graph_proto'), pcounter.getData(), 1);
+            makePie($('#graph_tld'), tcounter.getData(), 2, 'end');
+            
+            // Show table
+            var data = indexer.getData();
+            var tdata = [];
+            
+            for(var domain in data)
+            {
+                var ddata = data[domain];
+                
+                for(var i in ddata)
+                {
+                    var item = ddata[i];
+                    tdata.push([item.url.substring(0, 30), item.protocol, item.domain, item.path.substring(0, 70)]);
+                }
+            }
+            
+            //console.log(tdata);
+            
+            $('#data').html('<table cellpadding="0" cellspacing="0" border="0" id="datatable"></table>');
+            var dataTable = $('#datatable').dataTable({
+                aaData: tdata, aoColumns: [{sTitle: "URL"}, {sTitle: "Protocol"}, {sTitle: "Domain"}, {sTitle: "Path"}]
+            })
+        });
+            
+        </script>
+        
+        
+    </body>
+</html>

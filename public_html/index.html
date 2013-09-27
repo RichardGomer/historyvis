@@ -35,11 +35,17 @@
                 position: relative;
             }
             
-            h2
+            h2.abs
             {
                 position: absolute;
                 top: 0;
                 left: 0;
+            }
+            
+            #csv textarea
+            {
+                width: 300px;
+                height: 200px;
             }
             
         </style>
@@ -54,10 +60,11 @@
                 <button id="doparse">Visualise</button>
             </div>
             <div id="output" style="display: none;">
-                <div id="graph_domains" style="width: 600px; height: 400px; float: left;"><h2>Domain</h2></div>
-                <div id="graph_proto" style="width: 300px; height: 200px; float: right;"><h2>Protocol</h2></div>
-                <div id="graph_tld" style="width: 300px; height: 200px; float: right;"><h2><acronym title="Top Level Domain">TLD</acronym></h2></div>
-                <div id="data" style="margin-top: 30px; width: 900px; height: 450px; float: right;"><h2>Data</h2></div>
+                <div id="graph_domains" style="width: 600px; height: 400px; float: left;"><h2 class="abs">Domain</h2></div>
+                <div id="graph_proto" style="width: 300px; height: 200px; float: right;"><h2 class="abs">Protocol</h2></div>
+                <div id="graph_tld" style="width: 300px; height: 200px; float: right;"><h2 class="abs"><acronym title="Top Level Domain">TLD</acronym></h2></div>
+                <div id="data" style="margin-top: 30px; width: 900px; height: 450px; float: left;"><h2>Data</h2></div>
+                <div id="csv" style="margin-top: 20px; width: 900px; height: 300px; float: left;"><h2>CSV</h2></div>
             </div>
             
             <div style="font-size: 10px; text-align: right; clear: both;"><a style="color: #666;" href="https://github.com/RichardGomer/historyvis">History Visualiser</a></div>
@@ -181,9 +188,21 @@
                 }
             }
             
+            // List all domains as CSV in a box
+            $('#csv').append('<textarea id="txtcsv"></textarea>');
+            
+            var data = dcounter.getData();
+            var str = 'DOMAIN,URLS\n';
+            for(var dom in data)
+            {
+                str = str + dom + "," + data[dom] + "\n";
+            }
+            
+            $('#txtcsv').val(str);
+            
             //console.log(tdata);
             
-            $('#data').html('<table cellpadding="0" cellspacing="0" border="0" id="datatable"></table>');
+            $('#data').append('<table cellpadding="0" cellspacing="0" border="0" id="datatable"></table>');
             var dataTable = $('#datatable').dataTable({
                 aaData: tdata, aoColumns: [{sTitle: "URL"}, {sTitle: "Protocol"}, {sTitle: "Domain"}, {sTitle: "Path"}]
             })

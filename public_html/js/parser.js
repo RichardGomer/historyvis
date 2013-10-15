@@ -4,17 +4,19 @@ function HistoryParser()
     self.handlers = [];
     self.count = 0;
     
-    self.parse = function(text)
+    self.parse = function(element)
     {
+        var text = element.val();
+        
         var lines = text.match(/[^\r\n]+/g);
         
         for(var i in lines)
         {
-                self.parseLine(lines[i]);
+                self.parseURL(lines[i]);
         }
     }
-    
-    self.parseLine = function(line)
+
+    self.parseURL = function(line)
     {
         var sline = line.split('/');
         
@@ -39,8 +41,6 @@ function HistoryParser()
         {
             
         }
-        
-
     }
     
     /**
@@ -56,6 +56,28 @@ function HistoryParser()
     self.addHandler = function(handler)
     {
         self.handlers.push(handler);
+    }
+}
+
+/**
+ * HTML History Parser takes an element and looks for A elements within it
+ * The HREFs from the links are parsed as if they came from a simple URL list
+ */
+function HTMLHistoryParser()
+{
+    HistoryParser.call(this);
+    
+    var self = this;
+    
+    self.parse = function(element)
+    {
+        var links = element.find('a');
+
+        console.log("WTF is this? ", this);
+
+        links.each(function(index, link){
+           self.parseURL($(link).attr('href')); 
+        });
     }
 }
 

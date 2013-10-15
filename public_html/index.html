@@ -35,6 +35,11 @@
                 position: relative;
             }
             
+            div#history
+            {
+                overflow: auto;
+            }
+            
             h2.abs
             {
                 position: absolute;
@@ -56,14 +61,16 @@
         <div id="page" style="width: 950px; margin: 30px auto 30px auto;">
             <div id="input">
                 <p>Paste your history into the box below and hit visualise</p>
-                <textarea id="history" style="width: 100%; height: 300px;"></textarea>
+                <div id="historyholder">
+                    
+                </div>
                 <button id="doparse">Visualise</button>
             </div>
             <div id="output" style="display: none;">
                 <div id="graph_domains" style="width: 600px; height: 400px; float: left;"><h2 class="abs">Domain</h2></div>
                 <div id="graph_proto" style="width: 300px; height: 200px; float: right;"><h2 class="abs">Protocol</h2></div>
                 <div id="graph_tld" style="width: 300px; height: 200px; float: right;"><h2 class="abs"><acronym title="Top Level Domain">TLD</acronym></h2></div>
-                <div id="data" style="margin-top: 30px; width: 900px; height: 450px; float: left;"><h2>Data</h2></div>
+                <div id="data" style="margin-top: 30px; width: 900px; min-height: 450px; float: left; overflow: stretch;"><h2>Data</h2></div>
                 <div id="csv" style="margin-top: 20px; width: 900px; height: 300px; float: left;"><h2>CSV</h2></div>
             </div>
             
@@ -73,15 +80,32 @@
         
         <script type="text/javascript">
 
-            
+        var parser = null;
+
+        $(document).ready(function(){
+           
+            if(window.chrome)
+            {
+                /**
+                 * Chrome gets an editable DIV so that we can received pasted HTML
+                 */
+                $('#historyholder').append('<div id="history" style="width: 100%; height: 300px; border: 1px solid #ccc" contenteditable="true"></div>');
+                parser = new HTMLHistoryParser();
+            }
+            else
+            {
+                /**
+                 * Otherwise accept plain text (Firefox, IE?)
+                 */
+                parser = new HistoryParser();
+                $('#historyholder').append('<textarea id="history" style="width: 100%; height: 300px;"></textarea>');
+            }
+        
+        });
             
         $('#doparse').click(function(){
             
             console.log("Visualise!");
-            
-            var history = $('#history').val();
-            
-            var parser = new HistoryParser();
             
             var dcounter = new DomainVisitCounter();
             parser.addHandler(dcounter);
@@ -95,7 +119,7 @@
             var indexer = new URLIndex();
             parser.addHandler(indexer);
             
-            parser.parse(history);
+            parser.parse($('#history'));
             
             if(parser.count < 1)
             {

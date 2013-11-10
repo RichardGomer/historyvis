@@ -6,7 +6,7 @@
         <title>History Visualiser</title>
         <meta name="description" content="">
         
-        <meta name="author" content="Richard Gomer - www.xebre.net">
+        <meta name="author" content="Richard Gomer - www.xefarbe.net">
         
         <script src="js/jquery.min.js"></script>
         <script src="js/jquery.dataTables.min.js"></script>
@@ -40,6 +40,35 @@
                 overflow: auto;
             }
             
+            #history
+            {
+                border: 2px solid #f00;
+                margin-top: 100px;
+            }
+            
+            #doparse
+            {
+                padding: 10px 15px 10px 15px;
+                border: 2px solid #447821;
+                background: #71c837;
+                color: #fff;
+                font-size: 16px;
+                text-align: center;
+                border-radius: 12px;
+                font-weight: bold;
+                float: right;
+                margin: 20px 0 20px 0;
+            }
+            
+            #instructions, #historyholder
+            {
+                float: left;
+                width: 49%;
+                margin: 0;
+                padding: 0.5%;
+            }
+            
+            
             h2.abs
             {
                 position: absolute;
@@ -60,11 +89,35 @@
 
         <div id="page" style="width: 950px; margin: 30px auto 30px auto;">
             <div id="input">
-                <p>Paste your history into the box below and hit visualise</p>
+
+                <div id="instructions">
+                    
+                    <h1>Activity Instructions</h1>
+
+                    <p>The Web is used by many different kinds of people across the world. In this activity, we would like you to 
+                        reflect on your use of the Web, and evaluate its impact on your life.</p>
+                    
+                    <p>To get a clearer view of the kind of benefit that you get from the Web, use this tool to see which sites 
+                        you visit the most.</p>
+
+                    <p>Cut and paste your recent browsing activity from your browser's Show History page into the red box on the right
+                        to summarise your web history and show you a pie chart of the top sites that you use. What kind of sites do you 
+                        visit most? What kinds of service do they provide you? What interests 
+                        of yours and what areas of your life is the Web involved in, or not involved in?</p>
+                    
+                    <p>Can you think of a way of visualising your conclusions as a chart or diagram so that you can share it with other 
+                        participants in the discussion step that follows?</p>
+                    
+                    <p>Please note that your browsing data remains entirely private as no data is sent to the server; all the 
+                        calculations and visualisations are performed in JavaScript, locally, on your computer.</p>
+
+                </div>
+                
+                
                 <div id="historyholder">
                     
                 </div>
-                <button id="doparse">Visualise</button>
+                
             </div>
             <div id="output" style="display: none;">
                 <div id="graph_domains" style="width: 600px; height: 400px; float: left;"><h2 class="abs">Domain</h2></div>
@@ -83,26 +136,110 @@
         var parser = null;
 
         $(document).ready(function(){
-           
-            if(window.chrome)
+            
+            var in_type = 'plain'; // Hold the type of input we need to show
+            
+            /**
+             * IE
+             */
+            if (navigator.appName == 'Microsoft Internet Explorer')
             {
-                /**
-                 * Chrome gets an editable DIV so that we can received pasted HTML
-                 */
-                $('#historyholder').append('<div id="history" style="width: 100%; height: 300px; border: 1px solid #ccc" contenteditable="true"></div>');
-                parser = new HTMLHistoryParser();
+                $('#instructions').append('<h2><strong>Internet Explorer</strong></h2>\n\
+                <p>It\'s not possible to copy and paste internet history from Internet Explorer (the web browser that you\n\
+                are using), so you can\'t use this tool to view your history.  Instead, you can view the list of websites that you\n\
+                visit the most by following the instructions below:</p>\n\
+                <p><strong>View your top websites in Internet Explorer:</strong></p>\n\
+                <ol>\n\
+                <li>Press the <strong>ctrl</strong> button and at the same time press <strong>H</strong> to open your history</li>\n\
+                <li>On the history tab, select <strong>View by Most Visited</strong> from the drop-down menu</li>\n\
+                <li>The list of history will now show you the list of websites that you visit most often</li>\n\
+                </ol>\n\
+                \n\
+                ');
+            
+            in_type = 'none';
+            }
+            /**
+             * Chrome
+             */
+            else if(window.chrome)
+            {
+                in_type = 'rich';
+                
+                $('#instructions').append('<h2><strong>Google Chrome (and Chromium)</strong></h2>\n\
+                <p><strong>Analyse your browser history in Google Chrome (and Chromium)</strong></p>\n\
+                <ol>\n\
+                <li>Press the <strong>ctrl</strong> button and at the same time press <strong>H</strong> to open your history (cmd + H on Mac)</li>\n\
+                <li>Click on a blank part of the history page</li>\n\
+                <li>Press <strong>ctrl</strong> and <strong>A</strong> at the same time, to select everything</li>\n\
+                <li>Press <strong>ctrl</strong> and <strong>C</strong> to copy your history to the clipboard</li>\n\
+                <li>Return to this page and click on the red box to the right</li>\n\
+                <li>Press <strong>ctrl</strong> and <strong>V</strong> to paste your history into the box</li>\n\
+                <li>Press the green "Visualise" button to analyse your history</li>\n\
+                </ol>\n\
+                \n\
+                ');
+            }
+            /**
+             * Firefox
+             */
+            else if(/firefox/i.test(navigator.userAgent))
+            {
+                $('#instructions').append('<h2><strong>Firefox</strong></h2>\n\
+                <p><strong>Analyse your browser history in Firefox</strong></p>\n\
+                <ol>\n\
+                <li>Press the <strong>ctrl</strong> button and at the same time press <strong>H</strong> to open your history (cmd + H on Mac)</li>\n\
+                <li>Click on a heading in the history list (such as "Today" or "October")</li>\n\
+                <li>Press <strong>ctrl</strong> and <strong>A</strong> at the same time, to select everything</li>\n\
+                <li>Press <strong>ctrl</strong> and <strong>C</strong> to copy your history to the clipboard</li>\n\
+                <li>Click on the red box on this page, to the right of these instructions</li>\n\
+                <li>Press <strong>ctrl</strong> and <strong>V</strong> to paste your history into the box</li>\n\
+                <li>Press the green "Visualise" button to analyse your history</li>\n\
+                </ol>\n\
+                \n\
+                ');
+            }
+            /**
+             * Safari
+             */
+            else if(navigator.userAgent.toLowerCase().indexOf('safari/') > -1)
+            {
+                $('#instructions').append('<h2><strong>Safari</strong></h2>\n\
+                <p><strong>Analyse your browser history in Safari</strong></p>\n\
+                <ol>\n\
+                <li>Press the <strong>cmd</strong> button and at the same time press <strong>H</strong> to open your history (ctrl + H on Windows)</li>\n\
+                <li>Press <strong>cmd</strong> and <strong>A</strong> at the same time, to select all the history</li>\n\
+                <li>Press <strong>cmd</strong> and <strong>C</strong> to copy your history to the clipboard</li>\n\
+                <li>Return to this page and click on the red box to the right</li>\n\
+                <li>Press <strong>cmd</strong> and <strong>V</strong> to paste your history into the box</li>\n\
+                <li>Press the green "Visualise" button to analyse your history</li>\n\
+                </ol>\n\
+                \n\
+                ');
             }
             else
             {
-                /**
-                 * Otherwise accept plain text (Firefox, IE?)
-                 */
+                $('#instructions').append('    ');
+            }
+            
+            /**
+             * Add input box
+             */
+            if(in_type == 'rich')
+            {
+                $('#historyholder').append('<div id="history" style="width: 100%; height: 300px;" contenteditable="true"></div><button id="doparse">Visualise</button>');
+                parser = new HTMLHistoryParser();
+            }
+            else if(in_type == 'plain')
+            {
                 parser = new HistoryParser();
-                $('#historyholder').append('<textarea id="history" style="width: 100%; height: 300px;"></textarea>');
+                $('#historyholder').append('<textarea id="history" style="width: 100%; height: 300px;"></textarea><button id="doparse">Visualise</button>');   
+            }
+            else
+            {
+                    
             }
         
-        });
-            
         $('#doparse').click(function(){
             
             console.log("Visualise!");
@@ -230,6 +367,8 @@
             var dataTable = $('#datatable').dataTable({
                 aaData: tdata, aoColumns: [{sTitle: "URL"}, {sTitle: "Protocol"}, {sTitle: "Domain"}, {sTitle: "Path"}]
             })
+        });
+        
         });
             
         </script>
